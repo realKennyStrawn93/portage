@@ -25,6 +25,7 @@ import os
 import os.path
 import platform
 import re
+import setuptools
 import subprocess
 import sys
 
@@ -46,21 +47,43 @@ x_scripts = {
 	],
 }
 
-# Dictionary custom modules written in C/C++ here.  The structure is
-#   key   = module name
-#   value = list of C/C++ source code, path relative to top source directory
-x_c_helpers = {
-	'portage.util.libc' : [
-		'src/portage_util_libc.c',
-	],
-}
-
-if platform.system() == 'Linux':
-	x_c_helpers.update({
-		'portage.util.file_copy.reflink_linux': [
-			'src/portage_util_file_copy_reflink_linux.c',
-		],
-	})
+# Disable helper modules on PyPI build
+#
+#def x_c_helpers():
+#	if platform.system() == 'Linux':
+#		ext_modules = [
+#			Extension(
+#				name='portage.util.libc',
+#				sources=[ 'src/portage_util_libc.c' ],
+#				extra_compile_args=[
+#					'-D_FILE_OFFSET_BITS=64',
+#					'-D_LARGEFILE_SOURCE',
+#					'-D_LARGEFILE64_SOURCE'
+#				]
+#			),
+#			Extension(
+#				name='portage.util.file_copy.reflink_linux',
+#				sources=[ 'src/portage_util_libc.c' ],
+#				extra_compile_args=[
+#					'-D_FILE_OFFSET_BITS=64',
+#					'-D_LARGEFILE_SOURCE',
+#					'-D_LARGEFILE64_SOURCE'
+#				]
+#			)
+#		],
+#	else:
+#		ext_modules = [
+#			Extension(
+#				name='portage.util.libc',
+#				sources='src/portage_util_libc.c',
+#				extra_compile_args=[
+#					'-D_FILE_OFFSET_BITS=64',
+#					'-D_LARGEFILE_SOURCE',
+#					'-D_LARGEFILE64_SOURCE'
+#				]
+#			)
+#		]
+#	return ext_modules
 
 
 class x_build(build):
@@ -660,7 +683,7 @@ class build_ext(_build_ext):
 			_build_ext.run(self)
 
 
-setup(
+setuptools.setup(
 	name = 'portage',
 	version = '2.3.78',
 	url = 'https://wiki.gentoo.org/wiki/Project:Portage',
@@ -683,10 +706,7 @@ setup(
 		['$sysconfdir/portage/repo.postsync.d', ['cnf/repo.postsync.d/example']],
 	],
 
-	ext_modules = [Extension(name=n, sources=m,
-		extra_compile_args=['-D_FILE_OFFSET_BITS=64',
-		'-D_LARGEFILE_SOURCE', '-D_LARGEFILE64_SOURCE'])
-		for n, m in x_c_helpers.items()],
+#	ext_modules = x_c_helpers(),
 
 	cmdclass = {
 		'build': x_build,
